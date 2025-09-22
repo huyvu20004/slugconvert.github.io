@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Slug Converter — Chuyển tiêu đề sang slug</title>
+  <title>Slug & Image Converter</title>
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6}
     *{box-sizing:border-box}
@@ -12,7 +12,7 @@
       background:linear-gradient(180deg,#07101a 0%, #0b1220 100%);
       color:var(--white)}
     .wrap{max-width:980px;margin:0 auto;padding:20px;background:rgba(255,255,255,0.02);
-      border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7)}
+      border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7);margin-bottom:40px}
     h1{font-size:20px;margin:0 0 12px}
     p.note{color:var(--muted);margin:0 0 18px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -34,6 +34,7 @@
   </style>
 </head>
 <body>
+  <!-- Slug Converter -->
   <div class="wrap" role="main">
     <h1>Slug Converter — chuyển tiêu đề → slug</h1>
     <p class="note">Dán tiêu đề (mỗi dòng 1 tiêu đề). Hệ thống sẽ chuyển thành slug chuẩn SEO (không dấu, chữ thường, thay khoảng trắng = <code>-</code>).</p>
@@ -79,21 +80,37 @@
     <div class="footer">code by @chenchenhuang</div>
   </div>
 
+  <!-- Image Converter -->
+  <div class="wrap">
+    <h1>JPG/PNG → WebP Converter</h1>
+    <p class="note">Chọn nhiều ảnh JPG/PNG để chuyển sang WebP. Có thể tải từng ảnh hoặc tất cả dưới dạng file ZIP.</p>
+    
+    <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" />
+    <div class="controls" style="margin-top:10px">
+      <label for="qualityRange">Chất lượng:</label>
+      <input type="range" id="qualityRange" min="0.1" max="1" step="0.1" value="0.8" />
+      <span id="qualityVal">0.8</span>
+      <button id="convertAllBtn">Chuyển tất cả sang WebP</button>
+      <button id="downloadZipBtn" class="ghost">Tải tất cả dưới dạng ZIP</button>
+    </div>
+    <div id="previewArea" style="margin-top:20px"></div>
+  </div>
+
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <script>
-    // Hàm slug fix lỗi mất chữ tiếng Việt
+    /* ===== Slug Converter JS ===== */
     function toSlugSingle(text, options = { keepNumbers: true }) {
       if (typeof text !== 'string') return '';
       let s = text.trim().toLowerCase();
-
       const from = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
       const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
-
       let result = "";
       for (let i = 0; i < s.length; i++) {
         const idx = from.indexOf(s[i]);
         result += (idx > -1 ? to[idx] : s[i]);
       }
-
       if (!options.keepNumbers) {
         result = result.replace(/[^a-z\s-]/g, '');
       } else {
@@ -103,7 +120,6 @@
       result = result.replace(/^\-+|\-+$/g, '');
       return result;
     }
-
     function convertMulti(text, config) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
       const seen = new Set();
@@ -128,7 +144,6 @@
         return outLines.join('\n');
       }
     }
-
     const inputText = document.getElementById('inputText');
     const outputArea = document.getElementById('outputArea');
     const convertBtn = document.getElementById('convertBtn');
@@ -141,7 +156,6 @@
     const trimDuplicates = document.getElementById('trimDuplicates');
     const allowNumbers = document.getElementById('allowNumbers');
     const pasteBtn = document.getElementById('pasteBtn');
-
     function doConvert(modeOption) {
       const mode = modeOption || modeSelect.value;
       const config = { mode: mode, trimDuplicates: trimDuplicates.checked, keepNumbers: allowNumbers.checked };
@@ -153,7 +167,6 @@
       const result = convertMulti(input, config);
       outputArea.textContent = result;
     }
-
     convertBtn.addEventListener('click', () => doConvert('plain'));
     convertMapBtn.addEventListener('click', () => doConvert('map'));
     modeSelect.addEventListener('change', () => doConvert());
@@ -204,6 +217,83 @@
     inputText.addEventListener('input', () => {
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => doConvert(), 450);
+    });
+
+    /* ===== Image Converter JS ===== */
+    const imageInput = document.getElementById("imageInput");
+    const convertAllBtn = document.getElementById("convertAllBtn");
+    const downloadZipBtn = document.getElementById("downloadZipBtn");
+    const previewArea = document.getElementById("previewArea");
+    const qualityRange = document.getElementById("qualityRange");
+    const qualityVal = document.getElementById("qualityVal");
+    let convertedImages = [];
+    qualityRange.addEventListener("input", () => {
+      qualityVal.textContent = qualityRange.value;
+    });
+    convertAllBtn.addEventListener("click", () => {
+      if (!imageInput.files.length) {
+        alert("Chưa chọn ảnh nào!");
+        return;
+      }
+      previewArea.innerHTML = "";
+      convertedImages = [];
+      Array.from(imageInput.files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(blob => {
+              const url = URL.createObjectURL(blob);
+              convertedImages.push({ name: file.name.replace(/\.[^/.]+$/, "") + ".webp", blob });
+              const div = document.createElement("div");
+              div.style.marginBottom = "14px";
+              div.innerHTML = `<strong>${file.name}</strong><br>`;
+              const imgEl = document.createElement("img");
+              imgEl.src = url;
+              imgEl.style.maxWidth = "200px";
+              imgEl.style.display = "block";
+              imgEl.style.marginTop = "6px";
+              const dlBtn = document.createElement("a");
+              dlBtn.href = url;
+              dlBtn.download = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+              dlBtn.textContent = "Tải WebP";
+              dlBtn.style.display = "inline-block";
+              dlBtn.style.marginTop = "6px";
+              dlBtn.style.background = "#06b6d4";
+              dlBtn.style.padding = "6px 10px";
+              dlBtn.style.borderRadius = "6px";
+              dlBtn.style.color = "#022";
+              dlBtn.style.fontWeight = "600";
+              div.appendChild(imgEl);
+              div.appendChild(dlBtn);
+              previewArea.appendChild(div);
+            }, "image/webp", parseFloat(qualityRange.value));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    downloadZipBtn.addEventListener("click", () => {
+      if (!convertedImages.length) {
+        alert("Chưa có ảnh đã convert!");
+        return;
+      }
+      const zip = new JSZip();
+      convertedImages.forEach(f => {
+        zip.file(f.name, f.blob);
+      });
+      zip.generateAsync({ type: "blob" }).then(content => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = "converted_images.zip";
+        a.click();
+      });
     });
   </script>
 </body>
