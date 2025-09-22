@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Combined Tool — Doc Extractor + Slug/Image/MD</title>
+<title>Doc Extractor + Slug/Image/MD Tool</title>
 <style>
 :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6;}
 *{box-sizing:border-box;}
@@ -25,6 +25,7 @@ label{font-size:13px;color:var(--muted);}
 .flex-main{display:flex;gap:20px;flex-wrap:wrap;}
 .flex-left{flex:1;min-width:300px;}
 .flex-right{flex:2;min-width:400px;}
+.editor-img{max-width:200px;margin:6px 0;display:block;}
 </style>
 </head>
 <body>
@@ -32,22 +33,19 @@ label{font-size:13px;color:var(--muted);}
 <div class="flex-main">
   <!-- Doc Extractor -->
   <div id="docContainer" class="flex-left wrap">
-    <button id="toggleDocPos" style="margin-bottom:10px;">Đổi trái/phải</button>
     <h1>Doc Extractor Tool</h1>
-    <p class="note">Paste nội dung Google Docs vào dưới đây:</p>
+    <p class="note">Paste nội dung Google Docs vào dưới đây (hỗ trợ hình ảnh drag & drop/paste):</p>
     <div id="editor" contenteditable="true" style="min-height:150px;"></div>
     <div class="controls">
-      <label><input type="checkbox" id="extractH2" checked> Trích xuất H2</label>
+      <label><input type="radio" name="extractMode" value="alt" checked> H1 + Alt</label>
+      <label><input type="radio" name="extractMode" value="h2"> H1 + H2</label>
       <label>Số lượng H2: <input type="number" id="h2Limit" value="0" min="0" style="width:60px;"></label>
       <label><input type="checkbox" id="randomH2"> Random H2</label>
-      <label>Xuất dạng:
-        <select id="outputType">
-          <option value="alt">H1 + Alt</option>
-          <option value="h2">H1 + H2</option>
-        </select>
-      </label>
     </div>
-    <button onclick="runExtract()">Trích xuất</button>
+    <div class="controls">
+      <button id="extractBtn">Trích xuất</button>
+      <button id="insertImgBtn">Chèn ảnh tự động</button>
+    </div>
     <div id="docOutput" class="result" contenteditable="true"></div>
     <div class="footer">code by @chenchenhuang</div>
   </div>
@@ -57,46 +55,26 @@ label{font-size:13px;color:var(--muted);}
     <!-- Slug Converter -->
     <div class="wrap">
       <h1>Slug Converter — chuyển tiêu đề → slug</h1>
-      <p class="note">Dán tiêu đề (mỗi dòng 1 tiêu đề). Hệ thống sẽ chuyển thành slug chuẩn SEO.</p>
       <textarea id="inputText" placeholder="Ví dụ: Liên Hệ SV388"></textarea>
       <div class="controls">
         <button id="convertBtn">Chuyển đổi</button>
-        <button id="convertMapBtn" class="ghost">Chuyển (đầu vào → slug)</button>
-        <button id="clearBtn" class="ghost small">Xóa</button>
-        <button id="pasteBtn" class="ghost small">Dán từ clipboard</button>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="options"><input type="checkbox" id="trimDuplicates" /> <label for="trimDuplicates">loại trùng</label></div>
-        <div class="options"><input type="checkbox" id="allowNumbers" checked /> <label for="allowNumbers">giữ chữ số</label></div>
-      </div>
-      <div id="outputArea" class="result" contenteditable="true" style="margin-top:10px;"></div>
-      <div class="controls">
         <button id="copyBtn">Copy</button>
-        <button id="downloadBtn" class="ghost">Tải .txt</button>
-        <button id="clearOutBtn" class="ghost small">Xóa</button>
+        <button id="clearBtn" class="ghost small">Xóa</button>
       </div>
-      <div style="margin-top:10px">
-        <label for="modeSelect">Chế độ xuất</label>
-        <select id="modeSelect" style="padding:8px;border-radius:8px;background:transparent;color:var(--white);border:1px solid rgba(255,255,255,0.04);width:100%;margin-top:6px">
-          <option value="plain">slug mỗi dòng</option>
-          <option value="map">dòng: "đầu vào -> slug"</option>
-          <option value="inline">liền mạch, cách nhau bởi dấu phẩy</option>
-        </select>
-      </div>
-      <div class="footer">code by @chenchenhuang</div>
+      <div id="outputArea" class="result" contenteditable="true"></div>
     </div>
 
     <!-- Image Converter -->
     <div class="wrap">
       <h1>JPG/PNG → WebP Converter</h1>
-      <p class="note">Chọn nhiều ảnh JPG/PNG để chuyển sang WebP.</p>
+      <p class="note">Chọn nhiều ảnh JPG/PNG để chèn vào Doc Extractor và tải WebP ZIP.</p>
       <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" />
       <div class="controls" style="margin-top:10px">
         <label for="qualityRange">Chất lượng:</label>
         <input type="range" id="qualityRange" min="0.1" max="1" step="0.1" value="0.8" />
         <span id="qualityVal">0.8</span>
-        <button id="convertAllBtn">Chuyển tất cả</button>
-        <button id="downloadZipBtn" class="ghost">Tải ZIP</button>
+        <button id="prepareImgBtn">Chuẩn bị ảnh chèn</button>
+        <button id="downloadZipBtn" class="ghost">Tải ZIP WebP</button>
       </div>
       <div id="previewArea" style="margin-top:20px"></div>
     </div>
@@ -104,18 +82,12 @@ label{font-size:13px;color:var(--muted);}
     <!-- MD Generator -->
     <div class="wrap">
       <h1>MD Generator</h1>
-      <p class="note">(Để tạo folder nhanh: nhập danh sách → xuất file .bat)</p>
+      <textarea id="mdInput" placeholder="Nhập danh sách tiêu đề mỗi dòng"></textarea>
       <div class="controls">
-        <label><input type="radio" name="mode" value="auto" checked> Tự đánh STT</label>
-        <label><input type="radio" name="mode" value="manual"> Giữ nguyên </label>
-      </div>
-      <textarea id="mdInput" placeholder="Ví dụ:
-Bắn cá
-Đá gà
-Bóng đá"></textarea>
-      <div class="controls">
-        <button onclick="convertMD()">Chuyển đổi</button>
-        <button onclick="downloadBat()" class="ghost">Tải .bat</button>
+        <label><input type="radio" name="mdMode" value="plain" checked> md "text"</label>
+        <label><input type="radio" name="mdMode" value="stt"> md "stt + text"</label>
+        <button id="mdConvertBtn">Chuyển đổi</button>
+        <button id="mdDownloadBtn" class="ghost">Tải .bat</button>
       </div>
       <div id="mdOutput" class="result" contenteditable="true"></div>
     </div>
@@ -124,96 +96,140 @@ Bóng đá"></textarea>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-/* ===== Doc Extractor JS ===== */
-function shuffleArray(array){const arr=array.slice();for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
-function extractAlt(){const editor=document.getElementById('editor');const altList=[];editor.querySelectorAll('p, div, li, h2, h3').forEach(block=>{let hasItalic=false;block.querySelectorAll('*').forEach(n=>{if(window.getComputedStyle(n).fontStyle==='italic')hasItalic=true;});if(hasItalic)altList.push(block.innerText.trim());});return altList;}
-function extractContent(options){const editor=document.getElementById('editor');let h1Text='';const h1=editor.querySelector('h1');if(h1)h1Text=h1.innerText.trim();else{const strongs=Array.from(editor.querySelectorAll('strong,b'));if(strongs.length>0)h1Text=strongs[0].innerText.trim();}let h2TextList=[];if(options.extractH2){let temp=Array.from(editor.querySelectorAll('h2')).map(el=>el.innerText.trim());if(options.h2Limit>0)temp=options.randomH2?shuffleArray(temp).slice(0,options.h2Limit):temp.slice(0,options.h2Limit);h2TextList=temp;}const altList=extractAlt();return {h1:h1Text,h2:h2TextList,alt:altList};}
-function runExtract(){const options={extractH2:document.getElementById('extractH2').checked,h2Limit:parseInt(document.getElementById('h2Limit').value),randomH2:document.getElementById('randomH2').checked};const result=extractContent(options);const type=document.getElementById('outputType').value;let outputHtml='<div>'+result.h1+'</div>';if(type==='alt'){result.alt.forEach(a=>outputHtml+='<div>'+a+'</div>');}else if(type==='h2'){result.h2.forEach(h=>outputHtml+='<div>'+h+'</div>');}document.getElementById('docOutput').innerHTML=outputHtml;}
-document.getElementById('toggleDocPos').onclick=()=>{
-  const container=document.getElementById('docContainer');
-  const parent=container.parentNode;
-  parent.insertBefore(container,parent.firstChild===container?parent.lastChild:parent.firstChild);
+/* ===== Slug Utility ===== */
+function toSlug(text){ 
+  const s=text.trim().toLowerCase(); 
+  const from="àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"; 
+  const to="aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd"; 
+  let r=""; 
+  for(let i=0;i<s.length;i++){const idx=from.indexOf(s[i]);r+=idx>-1?to[idx]:s[i];} 
+  return r.replace(/[^a-z0-9\s-]/g,'').replace(/[\s\-]+/g,'-').replace(/^\-+|\-+$/g,''); 
+}
+
+/* ===== Doc Extractor ===== */
+let availableImages=[];
+function extractContent(){
+  const editor=document.getElementById('editor');
+  let h1=''; let altList=[], h2List=[];
+  const h1El=editor.querySelector('h1');
+  if(h1El) h1=h1El.innerText.trim();
+  else {const s=editor.querySelector('strong,b'); if(s) h1=s.innerText.trim();}
+  // alt
+  editor.querySelectorAll('p, div, li, h2, h3').forEach(el=>{
+    let hasItalic=false;
+    el.querySelectorAll('*').forEach(n=>{if(window.getComputedStyle(n).fontStyle==='italic') hasItalic=true;});
+    if(hasItalic) altList.push(el.innerText.trim());
+  });
+  // h2
+  document.querySelectorAll('input[name="extractMode"]')[1].checked?(
+    h2List=Array.from(editor.querySelectorAll('h2')).map(e=>e.innerText.trim())
+  ):null;
+  const h2Limit=parseInt(document.getElementById('h2Limit').value);
+  if(h2Limit>0) h2List=h2List.slice(0,h2Limit);
+  return {h1,h2:h2List,alt:altList};
+}
+
+document.getElementById('extractBtn').onclick=()=>{
+  const result=extractContent();
+  const mode=document.querySelector('input[name="extractMode"]:checked').value;
+  const outDiv=document.getElementById('docOutput'); outDiv.innerHTML='';
+  if(mode==='alt'){
+    const h1Div=document.createElement('div'); h1Div.textContent=result.h1; outDiv.appendChild(h1Div);
+    result.alt.forEach(a=>{const div=document.createElement('div'); div.textContent=a; outDiv.appendChild(div);});
+  } else {
+    const h1Div=document.createElement('div'); h1Div.textContent=result.h1; outDiv.appendChild(h1Div);
+    result.h2.forEach(h=>{const div=document.createElement('div'); div.textContent=h; outDiv.appendChild(div);});
+  }
 };
 
-/* ===== Slug Converter JS ===== */
-function toSlugSingle(text,options={keepNumbers:true}){if(typeof text!=='string')return'';let s=text.trim().toLowerCase();const from="àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";const to="aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";let r="";for(let i=0;i<s.length;i++){const idx=from.indexOf(s[i]);r+=idx>-1?to[idx]:s[i];}if(!options.keepNumbers)r=r.replace(/[^a-z\s-]/g,'');else r=r.replace(/[^a-z0-9\s-]/g,'');return r.replace(/[\s\-]+/g,'-').replace(/^\-+|\-+$/g,'');}
-function convertMulti(text,config){const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);const seen=new Set();const out=[];for(const original of lines){const slug=toSlugSingle(original,{keepNumbers:config.keepNumbers});if(config.trimDuplicates){if(seen.has(slug))continue;seen.add(slug);}if(config.mode==='map')out.push(`${original} -> ${slug}`);else out.push(slug);}return config.mode==='inline'?out.join(', '):out.join('\n');}
-const inputText=document.getElementById('inputText');const outputArea=document.getElementById('outputArea');const convertBtn=document.getElementById('convertBtn');const convertMapBtn=document.getElementById('convertMapBtn');const copyBtn=document.getElementById('copyBtn');const downloadBtn=document.getElementById('downloadBtn');const clearBtn=document.getElementById('clearBtn');const clearOutBtn=document.getElementById('clearOutBtn');const modeSelect=document.getElementById('modeSelect');const trimDuplicates=document.getElementById('trimDuplicates');const allowNumbers=document.getElementById('allowNumbers');const pasteBtn=document.getElementById('pasteBtn');
-function doConvert(modeOption){const mode=modeOption||modeSelect.value;const config={mode,trimDuplicates:trimDuplicates.checked,keepNumbers:allowNumbers.checked};const input=inputText.value;if(!input.trim()){outputArea.textContent='';return;}outputArea.textContent=convertMulti(input,config);}
-convertBtn.onclick=()=>doConvert('plain');convertMapBtn.onclick=()=>doConvert('map');modeSelect.onchange=()=>doConvert();
-copyBtn.onclick=async()=>{const text=outputArea.textContent;if(!text)return alert('Không có nội dung để copy.');try{await navigator.clipboard.writeText(text);copyBtn.textContent='Đã copy ✓';setTimeout(()=>copyBtn.textContent='Copy',1200);}catch(e){alert('Copy thất bại');}};
-downloadBtn.onclick=()=>{const text=outputArea.textContent;if(!text)return alert('Không có nội dung để tải.');const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='slugs.txt';a.click();};
-clearBtn.onclick=()=>{inputText.value='';outputArea.textContent='';};clearOutBtn.onclick=()=>{outputArea.textContent='';};
-pasteBtn.onclick=async()=>{try{const text=await navigator.clipboard.readText();inputText.value+=(inputText.value?'\n':'')+text;doConvert();}catch(e){alert('Không dán được');}};
-inputText.addEventListener('input',()=>{clearTimeout(window.typingTimer);window.typingTimer=setTimeout(()=>doConvert(),400);});
+/* ===== Insert Images ===== */
+function insertImagesToEditor(){
+  const result=extractContent();
+  const editor=document.getElementById('editor');
+  const slugMap={};
+  availableImages.forEach(img=>{ const name=img.name.replace(/\.[^/.]+$/,""); slugMap[name]=img.url; });
+  // H1
+  if(result.h1){
+    const slug=toSlug(result.h1);
+    if(slugMap[slug]){
+      const img=document.createElement('img'); img.src=slugMap[slug]; img.className='editor-img';
+      const h1El=editor.querySelector('h1'); if(h1El) h1El.after(img);
+    }
+  }
+  // H2
+  result.h2.forEach(h=>{
+    const slug=toSlug(h);
+    const imgUrl=slugMap[slug]; if(!imgUrl) return;
+    const el=Array.from(editor.querySelectorAll('h2')).find(e=>e.innerText.trim()===h);
+    if(el){ const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img'; el.after(img);}
+  });
+  // Alt
+  result.alt.forEach(a=>{
+    const slug=toSlug(a);
+    const imgUrl=slugMap[slug]; if(!imgUrl) return;
+    const el=Array.from(editor.querySelectorAll('p,div,li,h2,h3')).find(e=>e.innerText.trim()===a);
+    if(el){ const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img'; el.before(img);}
+  });
+}
+document.getElementById('insertImgBtn').onclick=insertImagesToEditor;
 
-/* ===== Image Converter JS ===== */
+/* ===== Slug Converter ===== */
+document.getElementById('convertBtn').onclick=()=>{
+  const input=document.getElementById('inputText').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  const out=input.map(l=>toSlug(l)).join('\n');
+  document.getElementById('outputArea').textContent=out;
+};
+document.getElementById('copyBtn').onclick=async()=>{
+  const text=document.getElementById('outputArea').textContent;
+  if(!text)return alert('Không có nội dung để copy.');
+  try{await navigator.clipboard.writeText(text);}catch(e){alert('Copy thất bại');}
+};
+document.getElementById('clearBtn').onclick=()=>{document.getElementById('inputText').value='';document.getElementById('outputArea').textContent='';};
+
+/* ===== Image Converter ===== */
 const imageInput=document.getElementById("imageInput");
-const convertAllBtn=document.getElementById("convertAllBtn");
-const downloadZipBtn=document.getElementById("downloadZipBtn");
-const previewArea=document.getElementById("previewArea");
 const qualityRange=document.getElementById("qualityRange");
 const qualityVal=document.getElementById("qualityVal");
-let convertedImages=[];
 qualityRange.oninput=()=>{qualityVal.textContent=qualityRange.value;};
-convertAllBtn.onclick=()=>{
-  if(!imageInput.files.length){alert("Chưa chọn ảnh!");return;}
-  previewArea.innerHTML="";convertedImages=[];
+document.getElementById('prepareImgBtn').onclick=()=>{
+  if(!imageInput.files.length){alert("Chưa chọn ảnh!"); return;}
+  availableImages=[]; document.getElementById('previewArea').innerHTML='';
   Array.from(imageInput.files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const img=new Image();
-      img.onload=()=>{
-        const canvas=document.createElement("canvas");
-        canvas.width=img.width;canvas.height=img.height;
-        canvas.getContext("2d").drawImage(img,0,0);
-        canvas.toBlob(blob=>{
-          const url=URL.createObjectURL(blob);
-          convertedImages.push({name:file.name.replace(/\.[^/.]+$/,"")+".webp",blob});
-          const div=document.createElement("div");
-          div.style.marginBottom="14px";
-          div.innerHTML=`<strong>${file.name}</strong><br>`;
-          const imgEl=document.createElement("img");
-          imgEl.src=url;imgEl.style.maxWidth="200px";imgEl.style.display="block";imgEl.style.marginTop="6px";
-          const dlBtn=document.createElement("a");
-          dlBtn.href=url;dlBtn.download=file.name.replace(/\.[^/.]+$/,"")+".webp";
-          dlBtn.textContent="Tải WebP";dlBtn.style.display="inline-block";
-          dlBtn.style.marginTop="6px";dlBtn.style.background="#06b6d4";dlBtn.style.padding="6px 10px";
-          dlBtn.style.borderRadius="6px";dlBtn.style.color="#022";dlBtn.style.fontWeight="600";
-          div.appendChild(imgEl);div.appendChild(dlBtn);previewArea.appendChild(div);
-        },"image/webp",parseFloat(qualityRange.value));
-      };img.src=e.target.result;
-    };reader.readAsDataURL(file);
+    const url=URL.createObjectURL(file);
+    const img=document.createElement('img'); img.src=url; img.className='editor-img';
+    document.getElementById('previewArea').appendChild(img);
+    availableImages.push({name:file.name,url:url});
   });
+  alert("Ảnh sẵn sàng chèn vào Doc Extractor");
 };
-downloadZipBtn.onclick=()=>{
-  if(!convertedImages.length){alert("Chưa có ảnh!");return;}
-  const zip=new JSZip();convertedImages.forEach(f=>zip.file(f.name,f.blob));
-  zip.generateAsync({type:"blob"}).then(content=>{
-    const a=document.createElement("a");a.href=URL.createObjectURL(content);a.download="converted_images.zip";a.click();
-  });
+document.getElementById('downloadZipBtn').onclick=async()=>{
+  if(!availableImages.length){alert("Chưa có ảnh!"); return;}
+  const zip=new JSZip();
+  for(const img of availableImages){
+    const resp=await fetch(img.url);
+    const blob=await resp.blob();
+    zip.file(img.name.replace(/\.[^/.]+$/,".webp"),blob);
+  }
+  const content=await zip.generateAsync({type:"blob"});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(content); a.download="images.zip"; a.click();
 };
 
-/* ===== MD Generator JS ===== */
-function removeDiacritics(str){return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D");}
-function convertMD(){
-  const input=document.getElementById("mdInput").value.trim().split("\n");
-  const mode=document.querySelector('input[name="mode"]:checked').value;
-  let result=[];
-  input.forEach((line,i)=>{
-    let clean=removeDiacritics(line).toLowerCase().trim().replace(/\s+/g," ");
-    if(!clean)return;
-    if(mode==="auto") result.push(`md ${i+1} "${clean}"`);
-    else result.push(`md "${clean}"`);
-  });
-  document.getElementById("mdOutput").textContent=result.join("\n");
+/* ===== MD Generator ===== */
+function removeDiacritics(str){
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9\s]/g,"");
 }
-function downloadBat(){
-  const content=document.getElementById("mdOutput").textContent;
-  if(!content.trim()){alert("Chưa có nội dung!");return;}
-  const blob=new Blob([content],{type:"text/plain;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tao_folder.bat";a.click();URL.revokeObjectURL(a.href);
-}
+document.getElementById('mdConvertBtn').onclick=()=>{
+  const lines=document.getElementById('mdInput').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  const mode=document.querySelector('input[name="mdMode"]:checked').value;
+  const out=lines.map((l,i)=>mode==='stt'?`md "${i+1} ${removeDiacritics(l)}"`:`md "${removeDiacritics(l)}"`).join('\n');
+  document.getElementById('mdOutput').textContent=out;
+};
+document.getElementById('mdDownloadBtn').onclick=()=>{
+  const text=document.getElementById('mdOutput').textContent;
+  if(!text){alert("Không có nội dung"); return;}
+  const blob=new Blob([text],{type:'application/x-msdownload'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='md_output.bat'; a.click();
+};
 </script>
 </body>
 </html>
