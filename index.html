@@ -3,20 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Slug & Image Converter & MD Generator</title>
+  <title>Slug & Image Converter</title>
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6}
     *{box-sizing:border-box}
     body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-      margin:20px;
-      background:linear-gradient(180deg,#07101a 0%, #0b1220 100%);
-      color:var(--white)}
+      margin:20px;background:linear-gradient(180deg,#07101a 0%, #0b1220 100%);color:var(--white)}
     .wrap{max-width:980px;margin:0 auto;padding:20px;background:rgba(255,255,255,0.02);
       border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7);margin-bottom:40px}
     h1{font-size:20px;margin:0 0 12px}
     p.note{color:var(--muted);margin:0 0 18px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    textarea,input,select{width:100%;padding:12px;border-radius:8px;
+    textarea,input{width:100%;padding:12px;border-radius:8px;
       border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:vertical}
     textarea{min-height:160px}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -31,17 +29,17 @@
     label{font-size:13px;color:var(--muted)}
     .options{display:flex;gap:8px;align-items:center}
     @media(max-width:880px){.grid{grid-template-columns:1fr}}
-    .subtitle{font-size:14px;color:var(--muted);margin-bottom:15px}
   </style>
 </head>
 <body>
+
   <!-- Slug Converter -->
   <div class="wrap" role="main">
     <h1>Slug Converter — chuyển tiêu đề → slug</h1>
-    <p class="note">Dán tiêu đề (mỗi dòng 1 tiêu đề). Hệ thống sẽ chuyển thành slug chuẩn SEO (không dấu, chữ thường, thay khoảng trắng = <code>-</code>).</p>
+    <p class="note">Dán tiêu đề (mỗi dòng 1 tiêu đề). Hệ thống sẽ chuyển thành slug chuẩn SEO.</p>
     <div class="grid" style="align-items:start">
       <div>
-        <label for="inputText">Nhập tiêu đề (một tiêu đề mỗi dòng)</label>
+        <label for="inputText">Nhập tiêu đề</label>
         <textarea id="inputText" placeholder="Ví dụ: Liên Hệ SV388"></textarea>
         <div class="controls">
           <button id="convertBtn">Chuyển đổi</button>
@@ -50,19 +48,13 @@
           <button id="pasteBtn" class="ghost small">Dán từ clipboard</button>
         </div>
         <div style="margin-top:10px" class="row">
-          <div class="options">
-            <input type="checkbox" id="trimDuplicates" />
-            <label for="trimDuplicates">loại trùng</label>
-          </div>
-          <div class="options">
-            <input type="checkbox" id="allowNumbers" checked />
-            <label for="allowNumbers">giữ chữ số</label>
-          </div>
+          <div class="options"><input type="checkbox" id="trimDuplicates" /> <label for="trimDuplicates">loại trùng</label></div>
+          <div class="options"><input type="checkbox" id="allowNumbers" checked /> <label for="allowNumbers">giữ chữ số</label></div>
         </div>
       </div>
       <div>
         <label for="outputArea">Kết quả</label>
-        <div id="outputArea" class="result" contenteditable="true" aria-live="polite"></div>
+        <div id="outputArea" class="result" contenteditable="true"></div>
         <div class="controls" style="margin-top:10px">
           <button id="copyBtn">Copy</button>
           <button id="downloadBtn" class="ghost">Tải .txt</button>
@@ -70,7 +62,7 @@
         </div>
         <div style="margin-top:10px">
           <label for="modeSelect">Chế độ xuất</label>
-          <select id="modeSelect">
+          <select id="modeSelect" style="padding:8px;border-radius:8px;background:transparent;color:var(--white);border:1px solid rgba(255,255,255,0.04);width:100%;margin-top:6px">
             <option value="plain">slug mỗi dòng</option>
             <option value="map">dòng: "đầu vào -> slug"</option>
             <option value="inline">liền mạch, cách nhau bởi dấu phẩy</option>
@@ -84,15 +76,14 @@
   <!-- Image Converter -->
   <div class="wrap">
     <h1>JPG/PNG → WebP Converter</h1>
-    <p class="note">Chọn nhiều ảnh JPG/PNG để chuyển sang WebP. Có thể tải từng ảnh hoặc tất cả dưới dạng file ZIP.</p>
-    
+    <p class="note">Chọn nhiều ảnh JPG/PNG để chuyển sang WebP.</p>
     <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" />
     <div class="controls" style="margin-top:10px">
       <label for="qualityRange">Chất lượng:</label>
       <input type="range" id="qualityRange" min="0.1" max="1" step="0.1" value="0.8" />
       <span id="qualityVal">0.8</span>
-      <button id="convertAllBtn">Chuyển tất cả sang WebP</button>
-      <button id="downloadZipBtn" class="ghost">Tải tất cả dưới dạng ZIP</button>
+      <button id="convertAllBtn">Chuyển tất cả</button>
+      <button id="downloadZipBtn" class="ghost">Tải ZIP</button>
     </div>
     <div id="previewArea" style="margin-top:20px"></div>
   </div>
@@ -100,20 +91,20 @@
   <!-- MD Generator -->
   <div class="wrap">
     <h1>MD Generator</h1>
-    <div class="subtitle">(Để tạo folder nhanh: tạo file .txt → dán kết quả → đổi đuôi .txt sang .bat)</div>
-    
-    <div class="controls" style="margin-bottom:10px">
-      <label><input type="radio" name="mode" value="auto" checked> Tự đánh số STT</label>
-      <label><input type="radio" name="mode" value="manual"> Giữ nguyên </label>
-    </div>
-
-    <label for="mdInput">Nhập danh sách (mỗi dòng một mục)</label>
-    <textarea id="mdInput" placeholder="Ví dụ: Bắn cá&#10;Đá gà&#10;Bóng đá"></textarea>
+    <p class="note">(Để tạo folder nhanh: nhập danh sách → xuất file .bat)</p>
     <div class="controls">
-      <button id="mdConvertBtn">Chuyển đổi</button>
+      <label><input type="radio" name="mode" value="auto" checked> Tự đánh STT</label>
+      <label><input type="radio" name="mode" value="manual"> Giữ nguyên STT nhập vào</label>
     </div>
-    <label for="mdOutput">Kết quả</label>
-    <textarea id="mdOutput" class="result"></textarea>
+    <textarea id="mdInput" placeholder="Ví dụ:
+Bắn cá
+Đá gà
+Bóng đá"></textarea>
+    <div class="controls">
+      <button onclick="convertMD()">Chuyển đổi</button>
+      <button onclick="downloadBat()" class="ghost">Tải .bat</button>
+    </div>
+    <div id="mdOutput" class="result" contenteditable="true"></div>
   </div>
 
   <!-- JSZip -->
@@ -127,205 +118,134 @@
       const from = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
       const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
       let result = "";
-      for (let i = 0; i < s.length; i++) {
-        const idx = from.indexOf(s[i]);
-        result += (idx > -1 ? to[idx] : s[i]);
-      }
-      if (!options.keepNumbers) {
-        result = result.replace(/[^a-z\s-]/g, '');
-      } else {
-        result = result.replace(/[^a-z0-9\s-]/g, '');
-      }
-      result = result.replace(/[\s\-]+/g, '-');
-      result = result.replace(/^\-+|\-+$/g, '');
+      for (let i=0;i<s.length;i++){const idx=from.indexOf(s[i]);result += (idx>-1?to[idx]:s[i]);}
+      if (!options.keepNumbers) result = result.replace(/[^a-z\s-]/g,'');
+      else result = result.replace(/[^a-z0-9\s-]/g,'');
+      result = result.replace(/[\s\-]+/g,'-').replace(/^\-+|\-+$/g,'');
       return result;
     }
     function convertMulti(text, config) {
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-      const seen = new Set();
-      const outLines = [];
-      for (let original of lines) {
-        const slug = toSlugSingle(original, { keepNumbers: config.keepNumbers });
-        if (config.trimDuplicates) {
-          if (seen.has(slug)) continue;
-          seen.add(slug);
-        }
-        if (config.mode === 'map') {
-          outLines.push(`${original} -> ${slug}`);
-        } else if (config.mode === 'inline') {
-          outLines.push(slug);
-        } else {
-          outLines.push(slug);
-        }
+      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+      const seen=new Set();const out=[];
+      for (let original of lines){
+        const slug=toSlugSingle(original,{keepNumbers:config.keepNumbers});
+        if(config.trimDuplicates){if(seen.has(slug))continue;seen.add(slug);}
+        if(config.mode==='map') out.push(`${original} -> ${slug}`);
+        else out.push(slug);
       }
-      return config.mode === 'inline' ? outLines.join(', ') : outLines.join('\n');
+      return config.mode==='inline'?out.join(', '):out.join('\n');
     }
-    const inputText = document.getElementById('inputText');
-    const outputArea = document.getElementById('outputArea');
-    const convertBtn = document.getElementById('convertBtn');
-    const convertMapBtn = document.getElementById('convertMapBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const clearOutBtn = document.getElementById('clearOutBtn');
-    const modeSelect = document.getElementById('modeSelect');
-    const trimDuplicates = document.getElementById('trimDuplicates');
-    const allowNumbers = document.getElementById('allowNumbers');
-    const pasteBtn = document.getElementById('pasteBtn');
-    function doConvert(modeOption) {
-      const mode = modeOption || modeSelect.value;
-      const config = { mode: mode, trimDuplicates: trimDuplicates.checked, keepNumbers: allowNumbers.checked };
-      const input = inputText.value;
-      if (!input.trim()) {
-        outputArea.textContent = '';
-        return;
-      }
-      outputArea.textContent = convertMulti(input, config);
+    const inputText=document.getElementById('inputText');
+    const outputArea=document.getElementById('outputArea');
+    const convertBtn=document.getElementById('convertBtn');
+    const convertMapBtn=document.getElementById('convertMapBtn');
+    const copyBtn=document.getElementById('copyBtn');
+    const downloadBtn=document.getElementById('downloadBtn');
+    const clearBtn=document.getElementById('clearBtn');
+    const clearOutBtn=document.getElementById('clearOutBtn');
+    const modeSelect=document.getElementById('modeSelect');
+    const trimDuplicates=document.getElementById('trimDuplicates');
+    const allowNumbers=document.getElementById('allowNumbers');
+    const pasteBtn=document.getElementById('pasteBtn');
+    function doConvert(modeOption){
+      const mode=modeOption||modeSelect.value;
+      const config={mode,trimDuplicates:trimDuplicates.checked,keepNumbers:allowNumbers.checked};
+      const input=inputText.value;if(!input.trim()){outputArea.textContent='';return;}
+      outputArea.textContent=convertMulti(input,config);
     }
-    convertBtn.addEventListener('click', () => doConvert('plain'));
-    convertMapBtn.addEventListener('click', () => doConvert('map'));
-    modeSelect.addEventListener('change', () => doConvert());
-    copyBtn.addEventListener('click', async () => {
-      const text = outputArea.textContent;
-      if (!text) return alert('Không có nội dung để copy.');
-      try {
-        await navigator.clipboard.writeText(text);
-        copyBtn.textContent = 'Đã copy ✓';
-        setTimeout(() => copyBtn.textContent = 'Copy', 1200);
-      } catch (e) {
-        alert('Copy thất bại — trình duyệt không cho phép.');
-      }
-    });
-    downloadBtn.addEventListener('click', () => {
-      const text = outputArea.textContent;
-      if (!text) return alert('Không có nội dung để tải.');
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'slugs.txt';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-    clearBtn.addEventListener('click', () => {
-      inputText.value = '';
-      outputArea.textContent = '';
-    });
-    clearOutBtn.addEventListener('click', () => outputArea.textContent = '');
-    pasteBtn.addEventListener('click', async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        inputText.value = (inputText.value ? inputText.value + '\n' : '') + text;
-        doConvert();
-      } catch (e) {
-        alert('Không thể dán từ clipboard.');
-      }
-    });
-    inputText.addEventListener('paste', () => setTimeout(() => doConvert(), 50));
-    let typingTimer;
-    inputText.addEventListener('input', () => {
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => doConvert(), 450);
-    });
+    convertBtn.onclick=()=>doConvert('plain');
+    convertMapBtn.onclick=()=>doConvert('map');
+    modeSelect.onchange=()=>doConvert();
+    copyBtn.onclick=async()=>{
+      const text=outputArea.textContent;if(!text)return alert('Không có nội dung để copy.');
+      try{await navigator.clipboard.writeText(text);copyBtn.textContent='Đã copy ✓';
+        setTimeout(()=>copyBtn.textContent='Copy',1200);}catch(e){alert('Copy thất bại');}};
+    downloadBtn.onclick=()=>{
+      const text=outputArea.textContent;if(!text)return alert('Không có nội dung để tải.');
+      const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');
+      a.href=url;a.download='slugs.txt';a.click();URL.revokeObjectURL(url);
+    };
+    clearBtn.onclick=()=>{inputText.value='';outputArea.textContent='';};
+    clearOutBtn.onclick=()=>{outputArea.textContent='';};
+    pasteBtn.onclick=async()=>{try{const text=await navigator.clipboard.readText();
+      inputText.value+=(inputText.value?'\n':'')+text;doConvert();}catch(e){alert('Không dán được');}};
+    inputText.addEventListener('input',()=>{clearTimeout(window.typingTimer);
+      window.typingTimer=setTimeout(()=>doConvert(),400);});
 
     /* ===== Image Converter JS ===== */
-    const imageInput = document.getElementById("imageInput");
-    const convertAllBtn = document.getElementById("convertAllBtn");
-    const downloadZipBtn = document.getElementById("downloadZipBtn");
-    const previewArea = document.getElementById("previewArea");
-    const qualityRange = document.getElementById("qualityRange");
-    const qualityVal = document.getElementById("qualityVal");
-    let convertedImages = [];
-    qualityRange.addEventListener("input", () => qualityVal.textContent = qualityRange.value);
-    convertAllBtn.addEventListener("click", () => {
-      if (!imageInput.files.length) {
-        alert("Chưa chọn ảnh nào!");
-        return;
-      }
-      previewArea.innerHTML = "";
-      convertedImages = [];
-      Array.from(imageInput.files).forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(blob => {
-              const url = URL.createObjectURL(blob);
-              convertedImages.push({ name: file.name.replace(/\.[^/.]+$/, "") + ".webp", blob });
-              const div = document.createElement("div");
-              div.style.marginBottom = "14px";
-              div.innerHTML = `<strong>${file.name}</strong><br>`;
-              const imgEl = document.createElement("img");
-              imgEl.src = url;
-              imgEl.style.maxWidth = "200px";
-              imgEl.style.display = "block";
-              imgEl.style.marginTop = "6px";
-              const dlBtn = document.createElement("a");
-              dlBtn.href = url;
-              dlBtn.download = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-              dlBtn.textContent = "Tải WebP";
-              dlBtn.style.display = "inline-block";
-              dlBtn.style.marginTop = "6px";
-              dlBtn.style.background = "#06b6d4";
-              dlBtn.style.padding = "6px 10px";
-              dlBtn.style.borderRadius = "6px";
-              dlBtn.style.color = "#022";
-              dlBtn.style.fontWeight = "600";
-              div.appendChild(imgEl);
-              div.appendChild(dlBtn);
-              previewArea.appendChild(div);
-            }, "image/webp", parseFloat(qualityRange.value));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+    const imageInput=document.getElementById("imageInput");
+    const convertAllBtn=document.getElementById("convertAllBtn");
+    const downloadZipBtn=document.getElementById("downloadZipBtn");
+    const previewArea=document.getElementById("previewArea");
+    const qualityRange=document.getElementById("qualityRange");
+    const qualityVal=document.getElementById("qualityVal");
+    let convertedImages=[];
+    qualityRange.oninput=()=>{qualityVal.textContent=qualityRange.value;};
+    convertAllBtn.onclick=()=>{
+      if(!imageInput.files.length){alert("Chưa chọn ảnh!");return;}
+      previewArea.innerHTML="";convertedImages=[];
+      Array.from(imageInput.files).forEach(file=>{
+        const reader=new FileReader();
+        reader.onload=e=>{
+          const img=new Image();
+          img.onload=()=>{
+            const canvas=document.createElement("canvas");
+            canvas.width=img.width;canvas.height=img.height;
+            canvas.getContext("2d").drawImage(img,0,0);
+            canvas.toBlob(blob=>{
+              const url=URL.createObjectURL(blob);
+              convertedImages.push({name:file.name.replace(/\.[^/.]+$/,"")+".webp",blob});
+              const div=document.createElement("div");
+              div.style.marginBottom="14px";
+              div.innerHTML=`<strong>${file.name}</strong><br>`;
+              const imgEl=document.createElement("img");
+              imgEl.src=url;imgEl.style.maxWidth="200px";imgEl.style.display="block";imgEl.style.marginTop="6px";
+              const dlBtn=document.createElement("a");
+              dlBtn.href=url;dlBtn.download=file.name.replace(/\.[^/.]+$/,"")+".webp";
+              dlBtn.textContent="Tải WebP";dlBtn.style.display="inline-block";
+              dlBtn.style.marginTop="6px";dlBtn.style.background="#06b6d4";dlBtn.style.padding="6px 10px";
+              dlBtn.style.borderRadius="6px";dlBtn.style.color="#022";dlBtn.style.fontWeight="600";
+              div.appendChild(imgEl);div.appendChild(dlBtn);previewArea.appendChild(div);
+            },"image/webp",parseFloat(qualityRange.value));
+          };img.src=e.target.result;
+        };reader.readAsDataURL(file);
       });
-    });
-    downloadZipBtn.addEventListener("click", () => {
-      if (!convertedImages.length) {
-        alert("Chưa có ảnh đã convert!");
-        return;
-      }
-      const zip = new JSZip();
-      convertedImages.forEach(f => zip.file(f.name, f.blob));
-      zip.generateAsync({ type: "blob" }).then(content => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = "converted_images.zip";
-        a.click();
+    };
+    downloadZipBtn.onclick=()=>{
+      if(!convertedImages.length){alert("Chưa có ảnh!");return;}
+      const zip=new JSZip();convertedImages.forEach(f=>zip.file(f.name,f.blob));
+      zip.generateAsync({type:"blob"}).then(content=>{
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(content);a.download="converted_images.zip";a.click();
       });
-    });
+    };
 
     /* ===== MD Generator JS ===== */
-    function removeDiacritics(str) {
-      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/đ/g, "d").replace(/Đ/g, "D");
+    function removeDiacritics(str){
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D");
     }
-    const mdInput = document.getElementById("mdInput");
-    const mdOutput = document.getElementById("mdOutput");
-    const mdConvertBtn = document.getElementById("mdConvertBtn");
-    mdConvertBtn.addEventListener("click", () => {
-      const mode = document.querySelector('input[name="mode"]:checked').value;
-      const lines = mdInput.value.trim().split("\n");
-      let result = [];
-      lines.forEach((line, i) => {
-        let clean = removeDiacritics(line).toLowerCase().trim().replace(/\s+/g, " ");
-        if (!clean) return;
-        if (mode === "auto") {
-          result.push(`md " ${i+1} ${clean}"`);
-        } else {
-          result.push(`md " ${clean}"`);
-        }
+    function convertMD(){
+      const input=document.getElementById("mdInput").value.trim().split("\n");
+      const mode=document.querySelector('input[name="mode"]:checked').value;
+      let result=[];
+      input.forEach((line,i)=>{
+        let clean=removeDiacritics(line).toLowerCase().trim().replace(/\s+/g," ");
+        if(!clean)return;
+        if(mode==="auto") result.push(`md "${i+1} ${clean}"`);
+        else result.push(`md "${clean}"`);
       });
-      mdOutput.value = result.join("\n");
-    });
+      document.getElementById("mdOutput").textContent=result.join("\n");
+    }
+    function downloadBat(){
+      const content=document.getElementById("mdOutput").textContent;
+      if(!content.trim()){alert("Chưa có nội dung!");return;}
+      const blob=new Blob([content],{type:"text/plain;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.download="tao_folder.bat";a.click();
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
