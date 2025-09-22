@@ -34,7 +34,7 @@ label{font-size:13px;color:var(--muted);}
   <!-- Doc Extractor -->
   <div id="docContainer" class="flex-left wrap">
     <h1>Doc Extractor Tool</h1>
-    <p class="note">Paste nội dung Google Docs vào dưới đây (hỗ trợ hình ảnh drag & drop/paste):</p>
+    <p class="note">Paste nội dung Google Docs vào dưới đây (hỗ trợ hình ảnh drag & drop/paste + Base64):</p>
     <div id="editor" contenteditable="true" style="min-height:150px;"></div>
     <div class="controls">
       <label><input type="radio" name="extractMode" value="alt" checked> H1 + Alt</label>
@@ -195,10 +195,14 @@ document.getElementById('prepareImgBtn').onclick=()=>{
   if(!imageInput.files.length){alert("Chưa chọn ảnh!"); return;}
   availableImages=[]; document.getElementById('previewArea').innerHTML='';
   Array.from(imageInput.files).forEach(file=>{
-    const url=URL.createObjectURL(file);
-    const img=document.createElement('img'); img.src=url; img.className='editor-img';
-    document.getElementById('previewArea').appendChild(img);
-    availableImages.push({name:file.name,url:url});
+    const reader=new FileReader();
+    reader.onload=(e)=>{
+      const url=e.target.result;
+      const img=document.createElement('img'); img.src=url; img.className='editor-img';
+      document.getElementById('previewArea').appendChild(img);
+      availableImages.push({name:file.name,url:url});
+    };
+    reader.readAsDataURL(file); // Base64
   });
   alert("Ảnh sẵn sàng chèn vào Doc Extractor");
 };
@@ -216,7 +220,9 @@ document.getElementById('downloadZipBtn').onclick=async()=>{
 
 /* ===== MD Generator ===== */
 function removeDiacritics(str){
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9\s]/g,"");
+  return str.normalize("NFD")
+            .replace(/[\u0300-\u036f]/g,"")
+            .replace(/đ/g,"d").replace(/Đ/g,"D");
 }
 document.getElementById('mdConvertBtn').onclick=()=>{
   const lines=document.getElementById('mdInput').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
