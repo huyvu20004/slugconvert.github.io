@@ -7,19 +7,26 @@
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6}
     *{box-sizing:border-box}
-    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; margin:20px; background:linear-gradient(180deg,#07101a 0%, #0b1220 100%); color:var(--white)}
-    .wrap{max-width:980px;margin:0 auto;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7)}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      margin:20px;
+      background:linear-gradient(180deg,#07101a 0%, #0b1220 100%);
+      color:var(--white)}
+    .wrap{max-width:980px;margin:0 auto;padding:20px;background:rgba(255,255,255,0.02);
+      border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7)}
     h1{font-size:20px;margin:0 0 12px}
     p.note{color:var(--muted);margin:0 0 18px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    textarea,input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:vertical}
+    textarea,input{width:100%;padding:12px;border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:vertical}
     textarea{min-height:160px}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    button{background:var(--accent);border:none;color:#022;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+    button{background:var(--accent);border:none;color:#022;padding:10px 12px;border-radius:8px;
+      cursor:pointer;font-weight:600}
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--white)}
     .small{font-size:13px;padding:8px 10px}
-    .result{white-space:pre-wrap;word-break:break-word;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);min-height:160px;color:var(--white)}
-    .footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+    .result{white-space:pre-wrap;word-break:break-word;background:rgba(255,255,255,0.02);padding:12px;
+      border-radius:8px;border:1px dashed rgba(255,255,255,0.04);min-height:160px;color:var(--white)}
+    .footer{margin-top:14px;color:var(--muted);font-size:13px}
     .row{display:flex;gap:8px;align-items:center}
     label{font-size:13px;color:var(--muted)}
     .options{display:flex;gap:8px;align-items:center}
@@ -30,19 +37,16 @@
   <div class="wrap" role="main">
     <h1>Slug Converter — chuyển tiêu đề → slug</h1>
     <p class="note">Dán tiêu đề (mỗi dòng 1 tiêu đề). Hệ thống sẽ chuyển thành slug chuẩn SEO (không dấu, chữ thường, thay khoảng trắng = <code>-</code>).</p>
-
     <div class="grid" style="align-items:start">
       <div>
         <label for="inputText">Nhập tiêu đề (một tiêu đề mỗi dòng)</label>
         <textarea id="inputText" placeholder="Ví dụ: Liên Hệ SV388"></textarea>
-
         <div class="controls">
           <button id="convertBtn">Chuyển đổi</button>
           <button id="convertMapBtn" class="ghost">Chuyển (đầu vào → slug)</button>
           <button id="clearBtn" class="ghost small">Xóa</button>
           <button id="pasteBtn" class="ghost small">Dán từ clipboard</button>
         </div>
-
         <div style="margin-top:10px" class="row">
           <div class="options">
             <input type="checkbox" id="trimDuplicates" />
@@ -54,17 +58,14 @@
           </div>
         </div>
       </div>
-
       <div>
         <label for="outputArea">Kết quả</label>
-        <div id="outputArea" class="result" aria-live="polite"></div>
-
+        <div id="outputArea" class="result" contenteditable="true" aria-live="polite"></div>
         <div class="controls" style="margin-top:10px">
           <button id="copyBtn">Copy</button>
           <button id="downloadBtn" class="ghost">Tải .txt</button>
           <button id="clearOutBtn" class="ghost small">Xóa</button>
         </div>
-
         <div style="margin-top:10px">
           <label for="modeSelect">Chế độ xuất</label>
           <select id="modeSelect" style="padding:8px;border-radius:8px;background:transparent;color:var(--white);border:1px solid rgba(255,255,255,0.04);width:100%;margin-top:6px">
@@ -75,40 +76,38 @@
         </div>
       </div>
     </div>
-
-    <!-- ✅ Footer credit -->
-    <div class="footer">
-      Code bởi @chenchenhuang
-    </div>
+    <div class="footer">code by @chenchenhuang</div>
   </div>
 
   <script>
+    // Hàm slug fix lỗi mất chữ tiếng Việt
     function toSlugSingle(text, options = { keepNumbers: true }) {
       if (typeof text !== 'string') return '';
-      let s = text.trim();
+      let s = text.trim().toLowerCase();
 
-      // ✅ Fix mất chữ đ/Đ
-      s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+      const from = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
+      const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
 
-      // Chuẩn hóa và bỏ dấu
-      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-      s = s.toLowerCase();
-      if (!options.keepNumbers) {
-        s = s.replace(/[^a-z\s-]/g, '');
-      } else {
-        s = s.replace(/[^a-z0-9\s-]/g, '');
+      let result = "";
+      for (let i = 0; i < s.length; i++) {
+        const idx = from.indexOf(s[i]);
+        result += (idx > -1 ? to[idx] : s[i]);
       }
-      s = s.replace(/[\s\-]+/g, '-');
-      s = s.replace(/^\-+|\-+$/g, '');
-      return s;
+
+      if (!options.keepNumbers) {
+        result = result.replace(/[^a-z\s-]/g, '');
+      } else {
+        result = result.replace(/[^a-z0-9\s-]/g, '');
+      }
+      result = result.replace(/[\s\-]+/g, '-');
+      result = result.replace(/^\-+|\-+$/g, '');
+      return result;
     }
 
     function convertMulti(text, config) {
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
       const seen = new Set();
       const outLines = [];
-
       for (let original of lines) {
         const slug = toSlugSingle(original, { keepNumbers: config.keepNumbers });
         if (config.trimDuplicates) {
@@ -123,7 +122,6 @@
           outLines.push(slug);
         }
       }
-
       if (config.mode === 'inline') {
         return outLines.join(', ');
       } else {
@@ -146,11 +144,7 @@
 
     function doConvert(modeOption) {
       const mode = modeOption || modeSelect.value;
-      const config = {
-        mode: mode,
-        trimDuplicates: trimDuplicates.checked,
-        keepNumbers: allowNumbers.checked
-      };
+      const config = { mode: mode, trimDuplicates: trimDuplicates.checked, keepNumbers: allowNumbers.checked };
       const input = inputText.value;
       if (!input.trim()) {
         outputArea.textContent = '';
@@ -163,7 +157,6 @@
     convertBtn.addEventListener('click', () => doConvert('plain'));
     convertMapBtn.addEventListener('click', () => doConvert('map'));
     modeSelect.addEventListener('change', () => doConvert());
-
     copyBtn.addEventListener('click', async () => {
       const text = outputArea.textContent;
       if (!text) return alert('Không có nội dung để copy.');
@@ -175,7 +168,6 @@
         alert('Copy thất bại — trình duyệt không cho phép.');
       }
     });
-
     downloadBtn.addEventListener('click', () => {
       const text = outputArea.textContent;
       if (!text) return alert('Không có nội dung để tải.');
@@ -189,10 +181,13 @@
       a.remove();
       URL.revokeObjectURL(url);
     });
-
-    clearBtn.addEventListener('click', () => { inputText.value = ''; outputArea.textContent = ''; });
-    clearOutBtn.addEventListener('click', () => { outputArea.textContent = ''; });
-
+    clearBtn.addEventListener('click', () => {
+      inputText.value = '';
+      outputArea.textContent = '';
+    });
+    clearOutBtn.addEventListener('click', () => {
+      outputArea.textContent = '';
+    });
     pasteBtn.addEventListener('click', async () => {
       try {
         const text = await navigator.clipboard.readText();
@@ -202,11 +197,9 @@
         alert('Không thể dán từ clipboard.');
       }
     });
-
     inputText.addEventListener('paste', () => {
       setTimeout(() => doConvert(), 50);
     });
-
     let typingTimer;
     inputText.addEventListener('input', () => {
       clearTimeout(typingTimer);
