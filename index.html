@@ -26,6 +26,7 @@ label{font-size:13px;color:var(--muted);}
 .flex-left{flex:1;min-width:300px;}
 .flex-right{flex:2;min-width:400px;}
 .editor-img{max-width:200px;margin:6px 0;display:block;}
+.preview-img{max-width:150px;margin:6px;display:inline-block;}
 </style>
 </head>
 <body>
@@ -74,6 +75,7 @@ label{font-size:13px;color:var(--muted);}
         <input type="range" id="qualityRange" min="0.1" max="1" step="0.1" value="0.8" />
         <span id="qualityVal">0.8</span>
         <button id="prepareImgBtn">Chuẩn bị ảnh chèn</button>
+        <button id="clearImgBtn" class="ghost">Xóa ảnh hiện tại</button>
         <button id="downloadZipBtn" class="ghost">Tải ZIP WebP</button>
       </div>
       <div id="previewArea" style="margin-top:20px"></div>
@@ -198,13 +200,18 @@ document.getElementById('prepareImgBtn').onclick=()=>{
     const reader=new FileReader();
     reader.onload=(e)=>{
       const url=e.target.result;
-      const img=document.createElement('img'); img.src=url; img.className='editor-img';
+      const img=document.createElement('img'); img.src=url; img.className='editor-img preview-img';
       document.getElementById('previewArea').appendChild(img);
       availableImages.push({name:file.name,url:url});
     };
     reader.readAsDataURL(file); // Base64
   });
   alert("Ảnh sẵn sàng chèn vào Doc Extractor");
+};
+document.getElementById('clearImgBtn').onclick=()=>{
+  availableImages=[];
+  document.getElementById('previewArea').innerHTML='';
+  imageInput.value='';
 };
 document.getElementById('downloadZipBtn').onclick=async()=>{
   if(!availableImages.length){alert("Chưa có ảnh!"); return;}
