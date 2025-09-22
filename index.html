@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Doc Extractor + Slug/Image/MD Tool</title>
 <style>
-:root{
-  --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#06b6d4; --white:#e6eef6;
-}
-body.light{--bg:#f5f5f5; --card:#fff; --muted:#555; --accent:#06b6d4; --white:#000;}
+:root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6;}
+body.light{--bg:#f5f5f5;--card:#fff;--muted:#555;--accent:#06b6d4;--white:#000;}
 *{box-sizing:border-box;}
 body{margin:20px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:linear-gradient(180deg,var(--bg) 0%,#0b1220 100%);color:var(--white);}
 .wrap{background:rgba(255,255,255,0.02);padding:20px;border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7);margin-bottom:20px;}
@@ -47,17 +45,14 @@ body.light .layer-preview{background:rgba(0,0,0,0.05);border:1px dashed #ccc;}
 </div>
 
 <div class="flex-main">
-  <!-- Bên trái: Doc Extractor tách 3 phần -->
+  <!-- Bên trái -->
   <div class="flex-left">
-
-    <!-- 1. Input Layer -->
     <div class="wrap doc-layer">
       <h1>Doc Extractor Input</h1>
       <p class="note">Paste nội dung Google Docs vào đây (hỗ trợ hình ảnh drag & drop/paste + Base64):</p>
       <div id="editor" contenteditable="true" style="min-height:150px;"></div>
     </div>
 
-    <!-- 2. Options + Trích xuất Layer -->
     <div class="wrap">
       <h1>Doc Extractor Options</h1>
       <div class="controls">
@@ -73,17 +68,14 @@ body.light .layer-preview{background:rgba(0,0,0,0.05);border:1px dashed #ccc;}
       <div class="footer">code by @chenchenhuang</div>
     </div>
 
-    <!-- 3. Output Layer -->
     <div class="wrap">
       <h1>Doc Extractor Output</h1>
       <div id="docOutput" class="result" contenteditable="true"></div>
     </div>
-
   </div>
 
-  <!-- Bên phải: Slug, Image, MD -->
+  <!-- Bên phải -->
   <div class="flex-right">
-    <!-- Slug Converter -->
     <div class="wrap">
       <h1>Slug Converter — chuyển tiêu đề → slug</h1>
       <textarea id="inputText" placeholder="Ví dụ: Liên Hệ SV388"></textarea>
@@ -94,7 +86,6 @@ body.light .layer-preview{background:rgba(0,0,0,0.05);border:1px dashed #ccc;}
       <div id="outputArea" class="result" contenteditable="true"></div>
     </div>
 
-    <!-- Image Converter -->
     <div class="wrap">
       <h1>JPG/PNG → WebP Converter</h1>
       <p class="note">Kéo thả hoặc chọn ảnh JPG/PNG để tự động tải WebP ZIP và chèn vào Doc Extractor.</p>
@@ -108,7 +99,6 @@ body.light .layer-preview{background:rgba(0,0,0,0.05);border:1px dashed #ccc;}
       </div>
     </div>
 
-    <!-- MD Generator -->
     <div class="wrap">
       <h1>MD Generator</h1>
       <textarea id="mdInput" placeholder="Nhập danh sách tiêu đề mỗi dòng"></textarea>
@@ -131,13 +121,16 @@ document.getElementById('modeToggle').addEventListener('change', e=>{
 });
 
 /* ===== Slug Utility ===== */
-function toSlug(text){ 
-  const s=text.trim().toLowerCase(); 
-  const from="àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"; 
-  const to="aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd"; 
-  let r=""; 
-  for(let i=0;i<s.length;i++){const idx=from.indexOf(s[i]);r+=idx>-1?to[idx]:s[i];} 
-  return r.replace(/[^a-z0-9\s-]/g,'').replace(/[\s\-]+/g,'-').replace(/^\-+|\-+$/g,''); 
+function toSlug(text){
+  const s=text.trim().toLowerCase();
+  const from="àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
+  const to="aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd";
+  let r="";
+  for(let i=0;i<s.length;i++){
+    const idx=from.indexOf(s[i]);
+    r+=idx>-1?to[idx]:s[i];
+  }
+  return r.replace(/[^a-z0-9\s-]/g,'').replace(/[\s\-]+/g,'-').replace(/^\-+|\-+$/g,'');
 }
 
 /* ===== Doc Extractor ===== */
@@ -147,12 +140,12 @@ function extractContent(){
   let h1=''; let altList=[], h2List=[];
   const h1El=editor.querySelector('h1, strong, b'); if(h1El) h1=h1El.innerText.trim();
   editor.querySelectorAll('p, div, li, h2, h3').forEach(el=>{
-    let hasItalic=false; el.querySelectorAll('*').forEach(n=>{if(window.getComputedStyle(n).fontStyle==='italic') hasItalic=true;});
+    let hasItalic=false;
+    el.querySelectorAll('*').forEach(n=>{if(window.getComputedStyle(n).fontStyle==='italic') hasItalic=true;});
     if(hasItalic) altList.push(el.innerText.trim());
   });
-  document.querySelectorAll('input[name="extractMode"]')[1].checked?(
-    h2List=Array.from(editor.querySelectorAll('h2')).map(e=>e.innerText.trim())
-  ):null;
+  document.querySelectorAll('input[name="extractMode"]')[1].checked ? 
+    h2List=Array.from(editor.querySelectorAll('h2')).map(e=>e.innerText.trim()) : null;
   const h2Limit=parseInt(document.getElementById('h2Limit').value);
   if(h2Limit>0) h2List=h2List.slice(0,h2Limit);
   return {h1,h2:h2List,alt:altList};
@@ -171,7 +164,8 @@ document.getElementById('extractBtn').onclick=()=>{
 }
 
 /* ===== Image Upload + Auto WebP + Insert ===== */
-const qualityRange=document.getElementById("qualityRange"); const qualityVal=document.getElementById("qualityVal");
+const qualityRange=document.getElementById("qualityRange");
+const qualityVal=document.getElementById("qualityVal");
 qualityRange.oninput=()=>{qualityVal.textContent=qualityRange.value;};
 const layerPreview=document.getElementById("layerPreview");
 layerPreview.addEventListener('click',()=>{document.getElementById("imageInput").click();});
@@ -183,6 +177,7 @@ function handleFiles(files){
   if(!files.length) return;
   availableImages=[]; layerPreview.innerHTML='';
   const zip = new JSZip(); let processedCount=0;
+
   Array.from(files).forEach(file=>{
     const reader = new FileReader();
     reader.onload = e=>{
@@ -191,15 +186,11 @@ function handleFiles(files){
         const canvas = document.createElement('canvas');
         canvas.width = imgEl.width; canvas.height = imgEl.height;
         canvas.getContext('2d').drawImage(imgEl,0,0);
-        const quality = parseFloat(qualityRange.value);
+
+        // WebP cho ZIP
         canvas.toBlob(blob=>{
           const nameWithoutExt = file.name.replace(/\.[^/.]+$/,"");
           zip.file(nameWithoutExt + ".webp", blob);
-          const url = URL.createObjectURL(blob);
-          const imgPreview = document.createElement('img');
-          imgPreview.src = url; imgPreview.className='preview-img';
-          layerPreview.appendChild(imgPreview);
-          availableImages.push({name:file.name,url:url});
           processedCount++;
           if(processedCount === files.length){
             zip.generateAsync({type:"blob"}).then(content=>{
@@ -208,35 +199,111 @@ function handleFiles(files){
               insertImagesToEditor();
             });
           }
-        },'image/webp',quality);
-      }; imgEl.src = e.target.result;
-    }; reader.readAsDataURL(file);
+        },'image/webp', parseFloat(qualityRange.value));
+
+        // Base64 gốc JPG/PNG cho editor
+        const reader2 = new FileReader();
+        reader2.onload = ee=>{
+          const base64 = ee.target.result;
+          const imgPreview = document.createElement('img');
+          imgPreview.src = base64;
+          imgPreview.className='preview-img';
+          layerPreview.appendChild(imgPreview);
+          availableImages.push({name:file.name,url:base64});
+        };
+        reader2.readAsDataURL(file);
+      };
+      imgEl.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   });
 }
 
 function insertImagesToEditor(){
-  const result=extractContent(); const editor=document.getElementById('editor');
-  const slugMap={}; availableImages.forEach(img=>{ slugMap[img.name.replace(/\.[^/.]+$/,"")]=img.url; });
-  const insertOrAppend=(el,imgUrl)=>{ const next=el.nextElementSibling; if(!next || next.tagName!=='IMG' || next.src!==imgUrl){const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img'; el.after(img); }};
+  const result=extractContent();
+  const editor=document.getElementById('editor');
+  const slugMap={};
+  availableImages.forEach(img=>{ slugMap[img.name.replace(/\.[^/.]+$/,"")]=img.url; });
+
+  const insertOrAppend=(el,imgUrl,before=false)=>{
+    const img=document.createElement('img');
+    img.src=imgUrl; img.className='editor-img';
+    if(before){ el.before(img); } else { el.after(img); }
+  };
+
   let usedImages=new Set();
-  if(result.h1){ const slug=toSlug(result.h1); const imgUrl = slugMap[slug]; if(imgUrl){ const h1El=editor.querySelector('h1, strong, b'); if(h1El) insertOrAppend(h1El,imgUrl); usedImages.add(slug); } }
-  result.h2.forEach(h=>{ const slug=toSlug(h); if(usedImages.has(slug)) return; const imgUrl=slugMap[slug]; if(!imgUrl) return; const el=Array.from(editor.querySelectorAll('h2')).find(e=>e.innerText.trim()===h); if(el){ insertOrAppend(el,imgUrl); usedImages.add(slug); } });
-  result.alt.forEach(a=>{ const slug=toSlug(a); if(usedImages.has(slug)) return; const imgUrl=slugMap[slug]; if(!imgUrl) return; const el=Array.from(editor.querySelectorAll('p,div,li,h2,h3')).find(e=>e.innerText.trim()===a); if(el){ insertOrAppend(el,imgUrl); usedImages.add(slug); } });
-  Object.keys(slugMap).forEach(s=>{ if(!usedImages.has(s)){ const img=document.createElement('img'); img.src=slugMap[s]; img.className='editor-img'; const h1El=editor.querySelector('h1, strong, b'); if(h1El) h1El.after(img); }});
+
+  // H1
+  if(result.h1){
+    const slug=toSlug(result.h1);
+    const imgUrl = slugMap[slug];
+    if(imgUrl){
+      const h1El=editor.querySelector('h1, strong, b');
+      if(h1El) insertOrAppend(h1El,imgUrl,false);
+      usedImages.add(slug);
+    }
+  }
+
+  // H2
+  result.h2.forEach(h=>{
+    const slug=toSlug(h);
+    if(usedImages.has(slug)) return;
+    const imgUrl=slugMap[slug]; if(!imgUrl) return;
+    const el=Array.from(editor.querySelectorAll('h2')).find(e=>e.innerText.trim()===h);
+    if(el){ insertOrAppend(el,imgUrl,false); usedImages.add(slug); }
+  });
+
+  // Alt (chèn trước)
+  result.alt.forEach(a=>{
+    const slug=toSlug(a);
+    if(usedImages.has(slug)) return;
+    const imgUrl=slugMap[slug]; if(!imgUrl) return;
+    const el=Array.from(editor.querySelectorAll('p,div,li,h2,h3')).find(e=>e.innerText.trim()===a);
+    if(el){ insertOrAppend(el,imgUrl,true); usedImages.add(slug); }
+  });
+
+  // Những ảnh chưa dùng
+  Object.keys(slugMap).forEach(s=>{
+    if(!usedImages.has(s)){
+      const img=document.createElement('img');
+      img.src=slugMap[s]; img.className='editor-img';
+      const h1El=editor.querySelector('h1, strong, b');
+      if(h1El) h1El.after(img);
+    }
+  });
 }
 
-document.getElementById('clearImgBtn').onclick=()=>{availableImages=[]; layerPreview.innerHTML='Kéo thả ảnh hoặc click vào đây để chọn ảnh';};
+document.getElementById('clearImgBtn').onclick=()=>{
+  availableImages=[]; layerPreview.innerHTML='Kéo thả ảnh hoặc click vào đây để chọn ảnh';
+};
 
 /* ===== Slug Converter auto ===== */
-const inputText=document.getElementById('inputText'); const outputArea=document.getElementById('outputArea');
-inputText.addEventListener('input',()=>{ const lines=inputText.value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0); outputArea.textContent=lines.map(l=>toSlug(l)).join('\n'); });
+const inputText=document.getElementById('inputText');
+const outputArea=document.getElementById('outputArea');
+inputText.addEventListener('input',()=>{
+  const lines=inputText.value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  outputArea.textContent=lines.map(l=>toSlug(l)).join('\n');
+});
 document.getElementById('copyBtn').onclick=()=>{navigator.clipboard.writeText(outputArea.textContent);}
 document.getElementById('clearBtn').onclick=()=>{inputText.value=''; outputArea.textContent='';};
 
 /* ===== MD Generator ===== */
 function removeDiacritics(str){return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D");}
-document.getElementById('mdConvertBtn').onclick=()=>{ const lines=document.getElementById('mdInput').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0); const mode=document.querySelector('input[name="mdMode"]:checked').value; const out=lines.map((l,i)=>mode==='stt'?`md "${i+1} ${removeDiacritics(l)}"`:`md "${removeDiacritics(l)}"`).join('\n'); document.getElementById('mdOutput').textContent=out; };
-document.getElementById('mdDownloadBtn').onclick=()=>{ const text=document.getElementById('mdOutput').textContent; if(!text){return;} const blob=new Blob([text],{type:'application/x-msdownload'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='md_output.bat'; a.click(); };
+document.getElementById('mdConvertBtn').onclick=()=>{
+  const lines=document.getElementById('mdInput').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  const mode=document.querySelector('input[name="mdMode"]:checked').value;
+  const out=lines.map((l,i)=>mode==='stt'?`md "${i+1} ${removeDiacritics(l)}"`:`md "${removeDiacritics(l)}"`).join('\n');
+  document.getElementById('mdOutput').textContent=out;
+};
+document.getElementById('mdDownloadBtn').onclick=()=>{
+  const text=document.getElementById('mdOutput').textContent;
+  if(!text) return;
+  const blob=new Blob([text],{type:'application/x-msdownload'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='md_output.bat';
+  a.click();
+};
 </script>
 </body>
 </html>
