@@ -12,7 +12,6 @@
   --accent:#06b6d4;
   --white:#e6eef6;
 }
-/* Light mode */
 body.light{
   --bg:#f5f5f5;
   --card:#ffffff;
@@ -20,16 +19,15 @@ body.light{
   --accent:#06b6d4;
   --white:#000;
 }
-
 *{box-sizing:border-box;}
 body{margin:20px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:linear-gradient(180deg,var(--bg) 0%,#0b1220 100%);color:var(--white);}
 .wrap{background:rgba(255,255,255,0.02);padding:20px;border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.7);margin-bottom:20px;}
 body.light .wrap{background:var(--card);box-shadow:0 6px 15px rgba(0,0,0,0.1);}
 h1{font-size:20px;margin:0 0 12px;}
 p.note{color:var(--muted);margin:0 0 18px;}
-textarea, div[contenteditable]{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:none;overflow-y:hidden;}
+textarea, div[contenteditable]{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:none;overflow-y:auto;}
 body.light textarea, body.light div[contenteditable]{border:1px solid #ccc;background:#fff;color:#000;}
-textarea{min-height:120px;}
+textarea{min-height:120px;max-height:400px;}
 button{background:var(--accent);border:none;color:#022;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600;}
 button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--white);}
 body.light button.ghost{border:1px solid #ccc;color:#000;}
@@ -42,10 +40,12 @@ label{font-size:13px;color:var(--muted);}
 .options{display:flex;gap:8px;align-items:center;}
 @media(max-width:880px){.flex-main{flex-direction:column;}.wrap{margin-bottom:20px;}}
 .flex-main{display:flex;gap:20px;flex-wrap:wrap;}
-.flex-left{flex:1;min-width:300px;}
+.flex-left{flex:1;min-width:300px;max-width:600px;max-height:800px;overflow:auto;}
 .flex-right{flex:2;min-width:400px;}
 .editor-img{max-width:200px;margin:6px 0;display:block;}
 .preview-img{max-width:150px;margin:6px;display:inline-block;}
+.layer-preview{border:2px dashed #ccc;background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;min-height:120px;display:flex;flex-wrap:wrap;gap:6px;cursor:pointer;}
+body.light .layer-preview{background:rgba(0,0,0,0.05);border:1px dashed #ccc;}
 .toggle-container{margin-bottom:10px;}
 </style>
 </head>
@@ -60,7 +60,7 @@ label{font-size:13px;color:var(--muted);}
   <div id="docContainer" class="flex-left wrap">
     <h1>Doc Extractor Tool</h1>
     <p class="note">Paste nội dung Google Docs vào dưới đây (hỗ trợ hình ảnh drag & drop/paste + Base64):</p>
-    <div id="editor" contenteditable="true" style="min-height:150px;"></div>
+    <div id="editor" contenteditable="true" style="min-height:150px; max-height:600px;"></div>
     <div class="controls">
       <label><input type="radio" name="extractMode" value="alt" checked> H1 + Alt</label>
       <label><input type="radio" name="extractMode" value="h2"> H1 + H2</label>
@@ -92,17 +92,16 @@ label{font-size:13px;color:var(--muted);}
     <!-- Image Converter -->
     <div class="wrap">
       <h1>JPG/PNG → WebP Converter</h1>
-      <p class="note">Chọn nhiều ảnh JPG/PNG để chèn vào Doc Extractor và tải WebP ZIP.</p>
-      <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" />
+      <p class="note">Kéo thả hoặc chọn ảnh JPG/PNG để tự động tải WebP ZIP và chèn vào Doc Extractor.</p>
+      <input type="file" id="imageInput" multiple accept="image/jpeg,image/png" style="display:none;">
+      <div class="layer-preview" id="layerPreview">Kéo thả ảnh hoặc click vào đây để chọn ảnh</div>
       <div class="controls" style="margin-top:10px">
         <label for="qualityRange">Chất lượng:</label>
         <input type="range" id="qualityRange" min="0.1" max="1" step="0.1" value="0.8" />
         <span id="qualityVal">0.8</span>
-        <button id="prepareImgBtn">Chuẩn bị ảnh chèn</button>
         <button id="clearImgBtn" class="ghost">Xóa ảnh hiện tại</button>
-        <button id="downloadZipBtn" class="ghost">Tải ZIP WebP</button>
       </div>
-      <div id="previewArea" style="margin-top:20px"></div>
+      <button id="downloadZipBtn" class="ghost" style="margin-top:8px;">Tải WebP ZIP</button>
     </div>
 
     <!-- MD Generator -->
@@ -145,13 +144,11 @@ function extractContent(){
   const h1El=editor.querySelector('h1');
   if(h1El) h1=h1El.innerText.trim();
   else {const s=editor.querySelector('strong,b'); if(s) h1=s.innerText.trim();}
-  // alt
   editor.querySelectorAll('p, div, li, h2, h3').forEach(el=>{
     let hasItalic=false;
     el.querySelectorAll('*').forEach(n=>{if(window.getComputedStyle(n).fontStyle==='italic') hasItalic=true;});
     if(hasItalic) altList.push(el.innerText.trim());
   });
-  // h2
   document.querySelectorAll('input[name="extractMode"]')[1].checked?(
     h2List=Array.from(editor.querySelectorAll('h2')).map(e=>e.innerText.trim())
   ):null;
@@ -179,27 +176,49 @@ function insertImagesToEditor(){
   const editor=document.getElementById('editor');
   const slugMap={};
   availableImages.forEach(img=>{ const name=img.name.replace(/\.[^/.]+$/,""); slugMap[name]=img.url; });
+
   // H1
   if(result.h1){
     const slug=toSlug(result.h1);
-    if(slugMap[slug]){
-      const img=document.createElement('img'); img.src=slugMap[slug]; img.className='editor-img';
-      const h1El=editor.querySelector('h1'); if(h1El) h1El.after(img);
+    const imgUrl = slugMap[slug];
+    if(imgUrl){
+      const h1El=editor.querySelector('h1') || editor.querySelector('strong,b');
+      if(h1El){
+        const next = h1El.nextElementSibling;
+        if(!next || next.tagName!=='IMG' || next.src!==imgUrl){
+          const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img';
+          h1El.after(img);
+        }
+      }
     }
   }
+
   // H2
   result.h2.forEach(h=>{
     const slug=toSlug(h);
     const imgUrl=slugMap[slug]; if(!imgUrl) return;
     const el=Array.from(editor.querySelectorAll('h2')).find(e=>e.innerText.trim()===h);
-    if(el){ const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img'; el.after(img);}
+    if(el){
+      const next=el.nextElementSibling;
+      if(!next || next.tagName!=='IMG' || next.src!==imgUrl){
+        const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img';
+        el.after(img);
+      }
+    }
   });
+
   // Alt
   result.alt.forEach(a=>{
     const slug=toSlug(a);
     const imgUrl=slugMap[slug]; if(!imgUrl) return;
     const el=Array.from(editor.querySelectorAll('p,div,li,h2,h3')).find(e=>e.innerText.trim()===a);
-    if(el){ const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img'; el.before(img);}
+    if(el){
+      const prev=el.previousElementSibling;
+      if(!prev || prev.tagName!=='IMG' || prev.src!==imgUrl){
+        const img=document.createElement('img'); img.src=imgUrl; img.className='editor-img';
+        el.before(img);
+      }
+    }
   });
 }
 document.getElementById('insertImgBtn').onclick=insertImagesToEditor;
@@ -212,38 +231,43 @@ document.getElementById('convertBtn').onclick=()=>{
 };
 document.getElementById('copyBtn').onclick=async()=>{
   const text=document.getElementById('outputArea').textContent;
-  if(!text)return alert('Không có nội dung để copy.');
+  if(!text)return;
   try{await navigator.clipboard.writeText(text);}catch(e){alert('Copy thất bại');}
 };
 document.getElementById('clearBtn').onclick=()=>{document.getElementById('inputText').value='';document.getElementById('outputArea').textContent='';};
 
 /* ===== Image Converter ===== */
-const imageInput=document.getElementById("imageInput");
 const qualityRange=document.getElementById("qualityRange");
 const qualityVal=document.getElementById("qualityVal");
 qualityRange.oninput=()=>{qualityVal.textContent=qualityRange.value;};
-document.getElementById('prepareImgBtn').onclick=()=>{
-  if(!imageInput.files.length){alert("Chưa chọn ảnh!"); return;}
-  availableImages=[]; document.getElementById('previewArea').innerHTML='';
-  Array.from(imageInput.files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=(e)=>{
-      const url=e.target.result;
-      const img=document.createElement('img'); img.src=url; img.className='editor-img preview-img';
-      document.getElementById('previewArea').appendChild(img);
-      availableImages.push({name:file.name,url:url});
-    };
-    reader.readAsDataURL(file);
+
+const layerPreview=document.getElementById("layerPreview");
+layerPreview.addEventListener('click',()=>{document.getElementById("imageInput").click();});
+layerPreview.addEventListener('dragover', e=>{e.preventDefault();});
+layerPreview.addEventListener('drop', e=>{
+  e.preventDefault();
+  handleFiles(e.dataTransfer.files);
+});
+document.getElementById("imageInput").addEventListener('change', e=>handleFiles(e.target.files));
+
+function handleFiles(files){
+  if(!files.length) return;
+  availableImages=[]; layerPreview.innerHTML='';
+  Array.from(files).forEach(file=>{
+    const url=URL.createObjectURL(file);
+    const img=document.createElement('img'); img.src=url; img.className='preview-img';
+    layerPreview.appendChild(img);
+    availableImages.push({name:file.name,url:url});
   });
-  alert("Ảnh sẵn sàng chèn vào Doc Extractor");
-};
+  downloadWebpZip();
+}
+
 document.getElementById('clearImgBtn').onclick=()=>{
-  availableImages=[];
-  document.getElementById('previewArea').innerHTML='';
-  imageInput.value='';
+  availableImages=[]; layerPreview.innerHTML='Kéo thả ảnh hoặc click vào đây để chọn ảnh';
 };
-document.getElementById('downloadZipBtn').onclick=async()=>{
-  if(!availableImages.length){alert("Chưa có ảnh!"); return;}
+
+async function downloadWebpZip(){
+  if(!availableImages.length) return;
   const zip=new JSZip();
   for(const img of availableImages){
     const resp=await fetch(img.url);
@@ -252,13 +276,11 @@ document.getElementById('downloadZipBtn').onclick=async()=>{
   }
   const content=await zip.generateAsync({type:"blob"});
   const a=document.createElement('a'); a.href=URL.createObjectURL(content); a.download="images.zip"; a.click();
-};
+}
 
 /* ===== MD Generator ===== */
 function removeDiacritics(str){
-  return str.normalize("NFD")
-            .replace(/[\u0300-\u036f]/g,"")
-            .replace(/đ/g,"d").replace(/Đ/g,"D");
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D");
 }
 document.getElementById('mdConvertBtn').onclick=()=>{
   const lines=document.getElementById('mdInput').value.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
@@ -268,7 +290,7 @@ document.getElementById('mdConvertBtn').onclick=()=>{
 };
 document.getElementById('mdDownloadBtn').onclick=()=>{
   const text=document.getElementById('mdOutput').textContent;
-  if(!text){alert("Không có nội dung"); return;}
+  if(!text){return;}
   const blob=new Blob([text],{type:'application/x-msdownload'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='md_output.bat'; a.click();
 };
