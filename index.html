@@ -19,7 +19,7 @@
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--white)}
     .small{font-size:13px;padding:8px 10px}
     .result{white-space:pre-wrap;word-break:break-word;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);min-height:160px;color:var(--white)}
-    .footer{margin-top:14px;color:var(--muted);font-size:13px}
+    .footer{margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
     .row{display:flex;gap:8px;align-items:center}
     label{font-size:13px;color:var(--muted)}
     .options{display:flex;gap:8px;align-items:center}
@@ -75,13 +75,24 @@
         </div>
       </div>
     </div>
+
+    <!-- ✅ Footer credit -->
+    <div class="footer">
+      Code bởi @chenchenhuang
+    </div>
   </div>
 
   <script>
     function toSlugSingle(text, options = { keepNumbers: true }) {
       if (typeof text !== 'string') return '';
       let s = text.trim();
+
+      // ✅ Fix mất chữ đ/Đ
+      s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+
+      // Chuẩn hóa và bỏ dấu
       s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
       s = s.toLowerCase();
       if (!options.keepNumbers) {
         s = s.replace(/[^a-z\s-]/g, '');
