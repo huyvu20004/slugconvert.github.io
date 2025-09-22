@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Slug & Image Converter</title>
+  <title>Slug & Image Converter & MD Generator</title>
   <style>
     :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--white:#e6eef6}
     *{box-sizing:border-box}
@@ -16,7 +16,7 @@
     h1{font-size:20px;margin:0 0 12px}
     p.note{color:var(--muted);margin:0 0 18px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    textarea,input{width:100%;padding:12px;border-radius:8px;
+    textarea,input,select{width:100%;padding:12px;border-radius:8px;
       border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white);resize:vertical}
     textarea{min-height:160px}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -31,6 +31,7 @@
     label{font-size:13px;color:var(--muted)}
     .options{display:flex;gap:8px;align-items:center}
     @media(max-width:880px){.grid{grid-template-columns:1fr}}
+    .subtitle{font-size:14px;color:var(--muted);margin-bottom:15px}
   </style>
 </head>
 <body>
@@ -69,7 +70,7 @@
         </div>
         <div style="margin-top:10px">
           <label for="modeSelect">Chế độ xuất</label>
-          <select id="modeSelect" style="padding:8px;border-radius:8px;background:transparent;color:var(--white);border:1px solid rgba(255,255,255,0.04);width:100%;margin-top:6px">
+          <select id="modeSelect">
             <option value="plain">slug mỗi dòng</option>
             <option value="map">dòng: "đầu vào -> slug"</option>
             <option value="inline">liền mạch, cách nhau bởi dấu phẩy</option>
@@ -94,6 +95,25 @@
       <button id="downloadZipBtn" class="ghost">Tải tất cả dưới dạng ZIP</button>
     </div>
     <div id="previewArea" style="margin-top:20px"></div>
+  </div>
+
+  <!-- MD Generator -->
+  <div class="wrap">
+    <h1>MD Generator</h1>
+    <div class="subtitle">(Để tạo folder nhanh: tạo file .txt → dán kết quả → đổi đuôi .txt sang .bat)</div>
+    
+    <div class="controls" style="margin-bottom:10px">
+      <label><input type="radio" name="mode" value="auto" checked> Tự đánh số STT</label>
+      <label><input type="radio" name="mode" value="manual"> Giữ nguyên </label>
+    </div>
+
+    <label for="mdInput">Nhập danh sách (mỗi dòng một mục)</label>
+    <textarea id="mdInput" placeholder="Ví dụ: Bắn cá&#10;Đá gà&#10;Bóng đá"></textarea>
+    <div class="controls">
+      <button id="mdConvertBtn">Chuyển đổi</button>
+    </div>
+    <label for="mdOutput">Kết quả</label>
+    <textarea id="mdOutput" class="result"></textarea>
   </div>
 
   <!-- JSZip -->
@@ -138,11 +158,7 @@
           outLines.push(slug);
         }
       }
-      if (config.mode === 'inline') {
-        return outLines.join(', ');
-      } else {
-        return outLines.join('\n');
-      }
+      return config.mode === 'inline' ? outLines.join(', ') : outLines.join('\n');
     }
     const inputText = document.getElementById('inputText');
     const outputArea = document.getElementById('outputArea');
@@ -164,8 +180,7 @@
         outputArea.textContent = '';
         return;
       }
-      const result = convertMulti(input, config);
-      outputArea.textContent = result;
+      outputArea.textContent = convertMulti(input, config);
     }
     convertBtn.addEventListener('click', () => doConvert('plain'));
     convertMapBtn.addEventListener('click', () => doConvert('map'));
@@ -198,9 +213,7 @@
       inputText.value = '';
       outputArea.textContent = '';
     });
-    clearOutBtn.addEventListener('click', () => {
-      outputArea.textContent = '';
-    });
+    clearOutBtn.addEventListener('click', () => outputArea.textContent = '');
     pasteBtn.addEventListener('click', async () => {
       try {
         const text = await navigator.clipboard.readText();
@@ -210,9 +223,7 @@
         alert('Không thể dán từ clipboard.');
       }
     });
-    inputText.addEventListener('paste', () => {
-      setTimeout(() => doConvert(), 50);
-    });
+    inputText.addEventListener('paste', () => setTimeout(() => doConvert(), 50));
     let typingTimer;
     inputText.addEventListener('input', () => {
       clearTimeout(typingTimer);
@@ -227,9 +238,7 @@
     const qualityRange = document.getElementById("qualityRange");
     const qualityVal = document.getElementById("qualityVal");
     let convertedImages = [];
-    qualityRange.addEventListener("input", () => {
-      qualityVal.textContent = qualityRange.value;
-    });
+    qualityRange.addEventListener("input", () => qualityVal.textContent = qualityRange.value);
     convertAllBtn.addEventListener("click", () => {
       if (!imageInput.files.length) {
         alert("Chưa chọn ảnh nào!");
@@ -285,15 +294,37 @@
         return;
       }
       const zip = new JSZip();
-      convertedImages.forEach(f => {
-        zip.file(f.name, f.blob);
-      });
+      convertedImages.forEach(f => zip.file(f.name, f.blob));
       zip.generateAsync({ type: "blob" }).then(content => {
         const a = document.createElement("a");
         a.href = URL.createObjectURL(content);
         a.download = "converted_images.zip";
         a.click();
       });
+    });
+
+    /* ===== MD Generator JS ===== */
+    function removeDiacritics(str) {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d").replace(/Đ/g, "D");
+    }
+    const mdInput = document.getElementById("mdInput");
+    const mdOutput = document.getElementById("mdOutput");
+    const mdConvertBtn = document.getElementById("mdConvertBtn");
+    mdConvertBtn.addEventListener("click", () => {
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const lines = mdInput.value.trim().split("\n");
+      let result = [];
+      lines.forEach((line, i) => {
+        let clean = removeDiacritics(line).toLowerCase().trim().replace(/\s+/g, " ");
+        if (!clean) return;
+        if (mode === "auto") {
+          result.push(`md " ${i+1} ${clean}"`);
+        } else {
+          result.push(`md " ${clean}"`);
+        }
+      });
+      mdOutput.value = result.join("\n");
     });
   </script>
 </body>
